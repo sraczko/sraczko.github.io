@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sraczko</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh; /* Full viewport height */
+        }
+        h1 {
+            color: #fff;
+            font-size: 50px;
+            font-family: Arial;
+            margin: 0;
+        }
+        #blinkingImage {
+            margin: 20px 0; /* Adjust top and bottom margins to control spacing */
+            animation: blink 1s infinite;
+            max-width: 80%; /* Adjust width as needed */
+            height: auto;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        #startButton {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            margin: 20px 0; /* Adjust margin to control spacing from blinking image */
+        }
+        #startButton img {
+            width: 400px; /* Adjust as needed */
+            height: auto;
+        }
+        #startButton:disabled img {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+    <script>
+        var windows = [];
+        var bounceIntervalId;
+        var openIntervalId;
+        var windowWidth = 500; // Width of each popup window
+        var windowHeight = 500; // Height of each popup window
+        var bounceSpeed = 0; // Speed of movement (lower is faster)
+        var openSpeed = 0; // Speed of opening new windows (lower is faster)
+        var popupsAllowed = false;
+        var hasUnsavedChanges = true; // Set to true from the start
+
+        function checkPopupsAllowed() {
+            console.log("Checking if popups are allowed...");
+            var testWindow = window.open("", "_blank", "width=100,height=100");
+
+            if (testWindow === null) {
+                alert("Popups are blocked. Please allow popups for this site.");
+                console.log("Popups are blocked.");
+                return;
+            }
+
+            setTimeout(() => {
+                if (testWindow && !testWindow.closed) {
+                    testWindow.close();
+                    console.log("Popups are allowed.");
+                    popupsAllowed = true;
+                    startOpeningWindows();
+                } else {
+                    alert("Popups are blocked. Please allow popups for this site.");
+                    console.log("Popups are blocked.");
+                }
+            }, 1);
+        }
+
+        function startOpeningWindows() {
+            console.log("Starting to open and move windows.");
+            if (openIntervalId || bounceIntervalId) {
+                clearInterval(openIntervalId);
+                clearInterval(bounceIntervalId);
+            }
+            openIntervalId = setInterval(openNewWindow, openSpeed);
+            bounceIntervalId = setInterval(moveWindows, bounceSpeed);
+        }
+
+        function openNewWindow() {
+            var x = Math.floor(Math.random() * (window.innerWidth - windowWidth));
+            var y = Math.floor(Math.random() * (window.innerHeight - windowHeight));
+            var dx = Math.random() > 0.5 ? 10 : -10;
+            var dy = Math.random() > 0.5 ? 10 : -10;
+
+            var newWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},left=${x},top=${y}`);
+            if (newWindow === null) {
+                alert("Allow popups on this website");
+                clearInterval(openIntervalId);
+                clearInterval(bounceIntervalId);
+                console.log("Failed to open a new window. Popups might be blocked.");
+                return;
+            }
+
+            newWindow.document.write("<html><head><title>sraka</title></head><body><h1>sraka</h1></body></html>");
+            console.log("Opened new window at position (" + x + ", " + y + ")");
+
+            windows.push({ win: newWindow, x: x, y: y, dx: dx, dy: dy });
+        }
+
+        function moveWindows() {
+            var screenWidth = window.innerWidth;
+            var screenHeight = window.innerHeight;
+
+            windows.forEach(windowObj => {
+                if (windowObj.win.closed) {
+                    windows = windows.filter(w => w !== windowObj);
+                    return;
+                }
+
+                windowObj.x += windowObj.dx;
+                windowObj.y += windowObj.dy;
+
+                if (windowObj.x + windowWidth > screenWidth || windowObj.x < 0) {
+                    windowObj.dx = -windowObj.dx;
+                }
+
+                if (windowObj.y + windowHeight > screenHeight || windowObj.y < 0) {
+                    windowObj.dy = -windowObj.dy;
+                }
+
+                windowObj.win.moveTo(windowObj.x, windowObj.y);
+            });
+        }
+
+        function start() {
+            var startButton = document.getElementById("startButton");
+            startButton.disabled = true;
+
+            if (!popupsAllowed) {
+                checkPopupsAllowed();
+            } else {
+                startOpeningWindows();
+            }
+
+            setTimeout(() => {
+                startButton.disabled = false;
+            }, 100); // Re-enable the button after 100 milliseconds
+        }
+
+        // Add event listener for the beforeunload event
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                var confirmationMessage = 'You have unsaved changes. Are you sure you want to leave?';
+                e.preventDefault(); // Cancel the event
+                e.returnValue = confirmationMessage; // Chrome requires returnValue to be set
+                return confirmationMessage; // Legacy method for other browsers
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>sraczko.kekmacats.github.io</h1>
+    <img id="blinkingImage" src="warning.png" alt="Blinking Image">
+    <button id="startButton" onclick="start()">
+        <img src="button.png" alt="Start">
+    </button>
+</body>
+</html>
